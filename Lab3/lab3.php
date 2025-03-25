@@ -61,8 +61,19 @@ if ($sigx * $sigy != 0) {
     $rxy = $Rxy / ($sigx * $sigy);
     printf("mx=%lg my=%lg sigx=%lg sigy=%lg rxy=%lg\n", $mx, $my, $sigx, $sigy, $rxy);
 
-    foreach ([0.05, 0.02, 0.01] as $alpha) {
-        $critical_value = $critical_values[$alpha][$df] ?? null;
+    foreach ([0.1, 0.05, 0.02] as $alpha) {
+        $df_keys = array_keys($critical_values[$alpha]);
+        sort($df_keys);
+        $closest_df = null;
+
+        foreach ($df_keys as $key) {
+            if ($key >= $df) {
+                $closest_df = $key;
+                break;
+            }
+        }
+
+        $critical_value = $closest_df ? $critical_values[$alpha][$closest_df] : null;
         if ($critical_value !== null) {
             if (abs($rxy) > $critical_value) {
                 printf("rxy is statistically significant at α=%g (critical value: %g)\n", $alpha, $critical_value);
