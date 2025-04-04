@@ -26,14 +26,22 @@ function lagrangeOptimization($P1, $P2, $V) {
     ];
 }
 
-function randomSearch($V, $P1, $P2, $iterations = 10000) {
+function randomSearch($V, $P1, $P2, $iterations = 100000) {
     $bestCost = INF;
     $bestR = 0;
     $bestH = 0;
 
+    // Задаємо розумний діапазон значень для r
+    $r_min = 0.01;
+    $r_max = pow(3 * $V / (4 * pi()), 1 / 3) * 2; // Оцінка максимального радіуса
+
     for ($i = 0; $i < $iterations; $i++) {
-        $r = rand(10, 1000) / 1000;
+        $r = $r_min + lcg_value() * ($r_max - $r_min);
         $h = $V / (pi() * $r * $r);
+
+        if ($h <= 0) {
+            continue;
+        }
 
         $cost = calculateCost($r, $h, $P1, $P2);
 
