@@ -1,73 +1,80 @@
 <?php
 
+// Перевіряємо кількість аргументів
 if ($argc != 4) {
-    echo "Невірна кількість аргументів. Синтаксис: V P1 P2\n";
+    echo "Використання: php cylinder_optimize.php <V> <P1> <P2>\n";
+    echo "  V  - об'єм циліндра в м³\n";
+    echo "  P1 - ціна матеріалу для дна в грн/м²\n";
+    echo "  P2 - ціна матеріалу для стінки в грн/м²\n";
     exit(1);
 }
 
+// Отримуємо значення з аргументів командного рядка
 $V = floatval($argv[1]);
 $P1 = floatval($argv[2]);
 $P2 = floatval($argv[3]);
 
-function calculateCost($r, $h, $P1, $P2) {
-    $costBottom = $P1 * pi() * $r * $r;
-    $costWalls = $P2 * 2 * pi() * $r * $h;
-    return $costBottom + $costWalls;
+$result1 = lagrangeMethod($V, $P1, $P2);
+$result2 = randomSearch($V, $P1, $P2);
+
+echo "Метод Лагранжа:\n";
+echo "r = " . round($result1['r'], 4) . " м\n";
+echo "h = " . round($result1['h'], 4) . " м\n";
+echo "Вартість = " . round($result1['cost'], 2) . " грн\n\n";
+
+echo "Метод випадкового пошуку:\n";
+echo "r = " . round($result2['r'], 4) . " м\n";
+echo "h = " . round($result2['h'], 4) . " м\n";
+echo "Вартість = " . round($result2['cost'], 2) . " грн\n";
+
+
+function lagrangeMethod($V, $P1, $P2) {
+    $pi = pi();
+
+    $costFunction = function($r) use ($P1, $P2, $V, $pi) {
+        if ($r <= 0) return INF;
+        $h = $V / ($pi * $r * $r);
+        return $P1 * $pi * $r * $r + $P2 * 2 * $pi * $r * $h;
+    };
+
+    $minCost = INF;
+    $bestR = 0;
+    for ($r = 0.01; $r <= 100; $r += 0.01) {
+        $cost = $costFunction($r);
+        if ($cost < $minCost) {
+            $minCost = $cost;
+            $bestR = $r;
+        }
+    }
+
+    $bestH = $V / ($pi * $bestR * $bestR);
+
+    return ['r' => $bestR, 'h' => $bestH, 'cost' => $minCost];
 }
 
-function lagrangeOptimization($P1, $P2, $V) {
-    $r = pow(($V * $P1) / (2 * pi() * $P2), 1 / 3);
-    $h = $V / (pi() * $r * $r);
 
-    return [
-        'radius' => $r,
-        'height' => $h,
-        'cost' => calculateCost($r, $h, $P1, $P2)
-    ];
-}
 
-function randomSearch($V, $P1, $P2, $iterations = 100000) {
-    $bestCost = INF;
+function randomSearch($V, $P1, $P2, $iterations = 5000)
+{
+    $pi = pi();
+    $minCost = INF;
     $bestR = 0;
     $bestH = 0;
 
-    // Задаємо розумний діапазон значень для r
-    $r_min = 0.01;
-    $r_max = pow(3 * $V / (4 * pi()), 1 / 3) * 2; // Оцінка максимального радіуса
-
     for ($i = 0; $i < $iterations; $i++) {
-        $r = $r_min + lcg_value() * ($r_max - $r_min);
-        $h = $V / (pi() * $r * $r);
+        $r = mt_rand(1, 10000) / 100; // від 0.01 до 100
+        $h = $V / ($pi * $r * $r);
 
-        if ($h <= 0) {
-            continue;
-        }
+        if ($h <= 0) continue;
 
-        $cost = calculateCost($r, $h, $P1, $P2);
+        $cost = $P1 * $pi * $r * $r + $P2 * 2 * $pi * $r * $h;
 
-        if ($cost < $bestCost) {
-            $bestCost = $cost;
+        if ($cost < $minCost) {
+            $minCost = $cost;
             $bestR = $r;
             $bestH = $h;
         }
     }
 
-    return [
-        'radius' => $bestR,
-        'height' => $bestH,
-        'cost' => $bestCost
-    ];
+    return ['r' => $bestR, 'h' => $bestH, 'cost' => $minCost];
 }
-
-$resultLagrange = lagrangeOptimization($P1, $P2, $V);
-$resultRandom = randomSearch($V, $P1, $P2);
-
-echo "Метод Лагранжа:\n";
-echo "  Радіус: " . round($resultLagrange['radius'], 4) . " м\n";
-echo "  Висота: " . round($resultLagrange['height'], 4) . " м\n";
-echo "  Мінімальна вартість: " . round($resultLagrange['cost'], 2) . " грн\n\n";
-
-echo "Метод випадкового пошуку:\n";
-echo "  Радіус: " . round($resultRandom['radius'], 4) . " м\n";
-echo "  Висота: " . round($resultRandom['height'], 4) . " м\n";
-echo "  Мінімальна вартість: " . round($resultRandom['cost'], 2) . " грн\n";
