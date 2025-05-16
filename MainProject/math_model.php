@@ -22,7 +22,6 @@ function poisson($lambda) {
     return $k - 1;
 }
 
-// Основна функція для розрахунку опору
 function resistanceWithCracks($L, $L0, $A0, $rho, $eps_th, $alpha, $beta) {
     $eps = ($L - $L0) / $L0;
 
@@ -41,7 +40,6 @@ function resistanceWithCracks($L, $L0, $A0, $rho, $eps_th, $alpha, $beta) {
     return $rho * $L / $A_eff;
 }
 
-// Вивід результатів
 echo "L (мм)\tДеформація (%)\tОпір (Ом)\n";
 for ($L = $L0; $L <= $L0 * 1.40; $L += 0.0005) {
     $R = resistanceWithCracks($L, $L0, $A0, $rho, $eps_th, $alpha, $beta);
